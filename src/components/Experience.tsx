@@ -6,6 +6,7 @@ import { EffectComposer, Bloom, Vignette, Noise } from '@react-three/postprocess
 import * as THREE from 'three';
 import TreeSystem from './TreeSystem';
 import CrystalOrnaments from './CrystalOrnaments';
+import TreeTopStar from './TreeTopStar';
 import { TreeContext, TreeContextType } from '../types';
 
 const Rig = () => {
@@ -78,6 +79,7 @@ const Experience: React.FC = () => {
       <group position={[0, -2, 0]}>
         <TreeSystem />
         <CrystalOrnaments />
+        <TreeTopStar position={[0, 9.5, 0]} />
       </group>
 
       {/* Controls & Rig */}

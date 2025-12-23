@@ -80,15 +80,6 @@ const CrystalOrnaments: React.FC = () => {
       groupRef.current.position.y = currentPan.current.y;
 
       groupRef.current.children.forEach((child, i) => {
-        if (child.name === 'STAR') {
-          const starY = THREE.MathUtils.lerp(10, 7.5, ease);
-          child.position.set(0, starY, 0);
-          child.rotation.y += delta * 0.5;
-          const s = 1.0 + Math.sin(state3d.clock.elapsedTime * 3) * 0.1;
-          child.scale.setScalar(THREE.MathUtils.lerp(0, s, ease));
-          return;
-        }
-
         const data = ornaments[i];
         if (!data) return;
 
@@ -140,20 +131,6 @@ const CrystalOrnaments: React.FC = () => {
           />
         </mesh>
       ))}
-
-      {/* TOP STAR - 保持醒目 */}
-      <mesh name="STAR" position={[0, 7.5, 0]}>
-        <sphereGeometry args={[0.25, 32, 32]} />
-        <meshStandardMaterial
-          color="#ffdd00"
-          emissive="#ffaa00"
-          emissiveIntensity={2}
-          roughness={0.2}
-          metalness={1.0}
-          toneMapped={false}
-        />
-        <pointLight intensity={1.5} color="#ffaa00" distance={8} decay={2} />
-      </mesh>
     </group>
   );
 };

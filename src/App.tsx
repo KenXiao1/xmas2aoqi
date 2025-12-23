@@ -1,8 +1,10 @@
-import React, { useState, Suspense, useContext, useEffect, useRef } from 'react';
-import { TreeContextType, AppState, TreeContext, PointerCoords } from './types';
+import React, { useState, Suspense, useContext, useEffect, useRef, useCallback } from 'react';
+import { TreeContextType, AppState, TreeContext, PointerCoords, InputMode, WishData } from './types';
 import Experience from './components/Experience';
 import GestureInput from './components/GestureInput';
+import MouseTouchInput from './components/MouseTouchInput';
 import TechEffects from './components/TechEffects';
+import { WishModal, ShootingStarsEffect } from './components/WishSystem';
 import { AnimatePresence, motion } from 'framer-motion';
 
 
@@ -80,15 +82,87 @@ const PhotoModal: React.FC<{ url: string | null, onClose: () => void }> = ({ url
             >
                 <img src={url} alt="Memory" className="max-h-[80vh] object-contain rounded shadow-inner" />
                 <div className="absolute -bottom-12 w-full text-center text-red-300/70 cinzel text-sm">
-                    ❄️ Precious Moment ❄️ Tap to close
+                    ❄️ Precious Moment ❄️
                 </div>
             </motion.div>
         </motion.div>
     );
 }
 
+// --- 输入模式切换按钮 ---
+const InputModeToggle: React.FC = () => {
+    const { inputMode, setInputMode, webcamEnabled, setWebcamEnabled } = useContext(TreeContext) as TreeContextType;
+
+    const toggleMode = () => {
+        if (inputMode === 'mouse') {
+            setInputMode('gesture');
+            setWebcamEnabled(true);
+        } else {
+            setInputMode('mouse');
+            setWebcamEnabled(false);
+        }
+    };
+
+    return (
+        <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={toggleMode}
+            className="pointer-events-auto flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-white/80 hover:bg-white/20 hover:text-white transition-all"
+        >
+            {inputMode === 'gesture' ? (
+                <>
+                    <span className="text-lg">✋</span>
+                    <span className="text-sm">手势控制</span>
+                </>
+            ) : (
+                <>
+                    <span className="text-lg">🖱️</span>
+                    <span className="text-sm">鼠标/触屏</span>
+                </>
+            )}
+        </motion.button>
+    );
+};
+
+// --- 操作提示 ---
+const ControlsHint: React.FC = () => {
+    const { inputMode, state } = useContext(TreeContext) as TreeContextType;
+    const [visible, setVisible] = useState(true);
+
+    useEffect(() => {
+        const timer = setTimeout(() => setVisible(false), 8000);
+        return () => clearTimeout(timer);
+    }, []);
+
+    if (!visible) return null;
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="pointer-events-none text-center"
+        >
+            <div className="inline-block px-6 py-3 rounded-xl bg-black/50 backdrop-blur-sm border border-white/10">
+                {inputMode === 'mouse' ? (
+                    <div className="text-white/70 text-sm space-y-1">
+                        <p>🖱️ <span className="text-white/90">拖拽</span> 旋转/平移 · <span className="text-white/90">滚轮</span> 缩放</p>
+                        <p>👆 <span className="text-white/90">双击</span> 切换模式 · <span className="text-white/90">点击星星</span> 许愿</p>
+                    </div>
+                ) : (
+                    <div className="text-white/70 text-sm space-y-1">
+                        <p>✋ <span className="text-white/90">张开手掌</span> 旋转 · <span className="text-white/90">握拳</span> 聚合</p>
+                        <p>☝️ <span className="text-white/90">单指悬停</span> 选择照片 · <span className="text-white/90">✌️两指</span> 平移</p>
+                    </div>
+                )}
+            </div>
+        </motion.div>
+    );
+};
+
 const AppContent: React.FC = () => {
-    const { state, setState, webcamEnabled, setWebcamEnabled, pointer, hoverProgress, selectedPhotoUrl, setSelectedPhotoUrl, clickTrigger } = useContext(TreeContext) as TreeContextType;
+    const { state, setState, webcamEnabled, setWebcamEnabled, inputMode, pointer, hoverProgress, selectedPhotoUrl, setSelectedPhotoUrl, clickTrigger } = useContext(TreeContext) as TreeContextType;
 
     useEffect(() => {
         if (selectedPhotoUrl && pointer) {
@@ -104,23 +178,48 @@ const AppContent: React.FC = () => {
     }, [clickTrigger]);
 
     return (
-        <main className="relative w-full h-screen bg-black text-white overflow-hidden cursor-none">
-            {/* 摄像头背景层 (z-0) */}
-            {webcamEnabled && <GestureInput />}
+        <main className="relative w-full h-screen bg-black text-white overflow-hidden">
+            {/* 摄像头背景层 (z-0) - 仅在手势模式下显示 */}
+            {webcamEnabled && inputMode === 'gesture' && <GestureInput />}
+
+            {/* 鼠标/触屏输入层 (z-5) */}
+            {inputMode === 'mouse' && <MouseTouchInput />}
 
             {/* 3D 场景层 (z-10) */}
-            <div className="absolute inset-0 z-10">
+            <div className="absolute inset-0 z-10 pointer-events-none">
                 <Suspense fallback={<div className="flex items-center justify-center h-full text-red-400 cinzel animate-pulse text-2xl">🎄 Loading Christmas Magic... ❄️</div>}>
                     <Experience />
                 </Suspense>
             </div>
 
             {/* 科技感特效层 (z-20) */}
-            {webcamEnabled && <TechEffects />}
+            {webcamEnabled && inputMode === 'gesture' && <TechEffects />}
 
             {/* UI 层 (z-30) */}
-            <div className="absolute inset-0 z-30 pointer-events-none flex flex-col justify-end p-4">
-                <footer className="flex justify-end">
+            <div className="absolute inset-0 z-30 pointer-events-none flex flex-col justify-between p-4">
+                {/* 顶部控制区 */}
+                <header className="flex justify-between items-start">
+                    <InputModeToggle />
+                    <div className="text-right">
+                        <h1 className="text-lg font-light text-white/60 cinzel tracking-wider">
+                            Christmas Memories
+                        </h1>
+                        <p className="text-xs text-white/40">
+                            {state === 'FORMED' ? '🎄 Timeline Mode' : '✨ Explore Mode'}
+                        </p>
+                    </div>
+                </header>
+
+                {/* 中间提示区 */}
+                <div className="flex-1 flex items-end justify-center pb-20">
+                    <ControlsHint />
+                </div>
+
+                {/* 底部 */}
+                <footer className="flex justify-between items-end">
+                    <div className="text-white/40 text-xs">
+                        ⭐ 点击树顶星星许愿
+                    </div>
                     <a
                         href="https://kenxiao.netlify.app/"
                         target="_blank"
@@ -132,22 +231,27 @@ const AppContent: React.FC = () => {
                 </footer>
             </div>
 
-            {/* 光标层 (z-200) */}
-            <DreamyCursor pointer={pointer} progress={hoverProgress} />
+            {/* 光标层 (z-200) - 仅在手势模式下显示 */}
+            {inputMode === 'gesture' && <DreamyCursor pointer={pointer} progress={hoverProgress} />}
 
             {/* 弹窗层 (z-100) */}
             <AnimatePresence>
                 {selectedPhotoUrl && <PhotoModal url={selectedPhotoUrl} onClose={() => setSelectedPhotoUrl(null)} />}
             </AnimatePresence>
+
+            {/* 许愿系统 (z-150) */}
+            <WishModal />
+            <ShootingStarsEffect />
         </main>
     );
 };
 
 const App: React.FC = () => {
     const [state, setState] = useState<AppState>('CHAOS');
-    const [rotationSpeed, setRotationSpeed] = useState<number>(0.3); // 固定基础旋转速度
-    const [rotationBoost, setRotationBoost] = useState<number>(0); // 额外加速度
-    const [webcamEnabled, setWebcamEnabled] = useState<boolean>(true);
+    const [rotationSpeed, setRotationSpeed] = useState<number>(0.3);
+    const [rotationBoost, setRotationBoost] = useState<number>(0);
+    const [webcamEnabled, setWebcamEnabled] = useState<boolean>(false); // 默认关闭手势
+    const [inputMode, setInputMode] = useState<InputMode>('mouse'); // 默认鼠标模式
     const [pointer, setPointer] = useState<PointerCoords | null>(null);
     const [hoverProgress, setHoverProgress] = useState<number>(0);
     const [clickTrigger, setClickTrigger] = useState<number>(0);
@@ -155,18 +259,45 @@ const App: React.FC = () => {
     const [panOffset, setPanOffset] = useState<{ x: number, y: number }>({ x: 0, y: 0 });
     const [zoomOffset, setZoomOffset] = useState<number>(0);
 
+    // 许愿系统状态
+    const [showWishModal, setShowWishModal] = useState<boolean>(false);
+    const [wishes, setWishes] = useState<WishData[]>(() => {
+        // 从 localStorage 读取
+        const saved = localStorage.getItem('christmas-wishes');
+        return saved ? JSON.parse(saved) : [];
+    });
+    const [wishEffectTrigger, setWishEffectTrigger] = useState<number>(0);
+
+    // 添加许愿
+    const addWish = useCallback((content: string) => {
+        const newWish: WishData = {
+            id: Date.now().toString(),
+            content,
+            timestamp: Date.now()
+        };
+        setWishes(prev => {
+            const updated = [...prev, newWish];
+            localStorage.setItem('christmas-wishes', JSON.stringify(updated));
+            return updated;
+        });
+    }, []);
+
     return (
         <TreeContext.Provider value={{
             state, setState,
             rotationSpeed, setRotationSpeed,
             webcamEnabled, setWebcamEnabled,
+            inputMode, setInputMode,
             pointer, setPointer,
             hoverProgress, setHoverProgress,
             clickTrigger, setClickTrigger,
             selectedPhotoUrl, setSelectedPhotoUrl,
             panOffset, setPanOffset,
             rotationBoost, setRotationBoost,
-            zoomOffset, setZoomOffset
+            zoomOffset, setZoomOffset,
+            showWishModal, setShowWishModal,
+            wishes, addWish,
+            wishEffectTrigger, setWishEffectTrigger
         }}>
             <AppContent />
         </TreeContext.Provider>
