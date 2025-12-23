@@ -119,17 +119,17 @@ const AppContent: React.FC = () => {
             {webcamEnabled && <TechEffects />}
 
             {/* UI 层 (z-30) */}
-            <div className="absolute inset-0 z-30 pointer-events-none flex flex-col justify-between p-8">
-                <header className="flex justify-between items-start">
-                    <div>
-                        <h1 className="text-4xl md:text-6xl font-bold cinzel text-transparent bg-clip-text bg-gradient-to-r from-red-300 via-green-200 to-amber-100 drop-shadow-[0_0_20px_rgba(255,255,255,0.5)]">
-                            🎄 CHRISTMAS MEMORIES ❄️
-                        </h1>
-                        <p className="text-red-400/80 cinzel tracking-widest text-sm mt-2">
-                            {state === 'CHAOS' ? '✨ SCATTERED MEMORIES // EXPLORE YOUR JOURNEY ✨' : '🎁 MEMORY TREE // TIMELINE OF LOVE 🎁'}
-                        </p>
-                    </div>
-                </header>
+            <div className="absolute inset-0 z-30 pointer-events-none flex flex-col justify-end p-4">
+                <footer className="flex justify-end">
+                    <a
+                        href="https://kenxiao.netlify.app/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="pointer-events-auto text-white/50 hover:text-white/80 transition-colors text-sm cinzel tracking-wide"
+                    >
+                        by KenXiao
+                    </a>
+                </footer>
             </div>
 
             {/* 光标层 (z-200) */}
