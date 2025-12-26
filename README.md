@@ -1,3 +1,11 @@
+This repo is originally vibe coded and crashed by vibe coding
+<br>
+see https://github.com/KenXiao1/christmas2aoqi
+
+
+---
+
+
 # 🎄 Christmas Memories Tree
 
 一个基于 React Three Fiber 的 3D 交互式圣诞树记忆展示项目，通过 AI 手势识别技术，让您的珍贵回忆在魔法般的 3D 空间中呈现。
