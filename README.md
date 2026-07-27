@@ -1,6 +1,6 @@
 This repo is originally vibe coded and crashed by vibe coding
 <br>
-see https://github.com/KenXiao1/christmas2aoqi (it's a similar repo, forked from another project)
+see https://github.com/KenXiao1/christmas2 (it's a similar repo, forked from another project)
 
 
 ---
